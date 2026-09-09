@@ -16,7 +16,7 @@ Set $a_0=0$ and $a_1=1$. Once $a_0,\ldots,a_k$ are chosen, take $a_{k+1}$ to be
 the smallest integer $n$ for which
 
 ```math
-\left|\{(i,j):0\leq i\leq j\leq k,\ j\geq1,\ a_i+a_j\leq n\}\right|<n.
+\left|\{(i,j):0\leq i\leq j\leq k,\ j\geq1,\ a_i+a_j\leq n\}\right|\lt n.
 ```
 
 For the resulting infinite sequence, write
