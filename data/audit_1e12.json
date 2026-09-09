@@ -1,0 +1,1 @@
+{"status":"PASS","limit":1000000000000,"terms":1595636,"R_limit":1000025288916,"E_limit":25288916,"maximum_error":101328126,"first_maximizer":843375334188,"last_maximizer":843375334188,"zero_error_positions":5874526,"all_contacts_checked":true,"all_greedy_decisions_checked":true,"blocks":29803,"workers":4,"block":33554432,"seconds":3857.9}
