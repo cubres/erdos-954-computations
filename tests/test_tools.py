@@ -12,6 +12,21 @@ spec.loader.exec_module(query)
 
 
 class ToolTests(unittest.TestCase):
+    def test_benchmark_records_matching_outputs(self):
+        with tempfile.TemporaryDirectory() as directory:
+            p = pathlib.Path(directory)
+            seed = p / "seed.csv"
+            seed.write_text("index,value\n1,1\n")
+            command = ["python3", str(ROOT / "tools/benchmark.py"), "--seed", str(seed),
+                       "--limit", "10000", "--output", str(p / "bench"),
+                       "--workers", "1", "2", "--blocks", "1024", "4096"]
+            result = subprocess.run(command, text=True, capture_output=True)
+            self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
+            data = json.loads((p / "bench/benchmarks.json").read_text())
+            self.assertTrue(data["all_term_lists_identical"])
+            self.assertFalse(data["independent_full_audit"])
+            self.assertEqual(len(data["runs"]), 4)
+
     def test_count_matches_direct_unordered_pairs(self):
         a = [1, 3, 5, 9, 13, 17, 24, 31, 38, 45]
         with_zero = [0] + a

@@ -57,6 +57,7 @@ or fast 10¹⁵ run.
 | Google Cloud Free Trial | $300 credit for 90 days for eligible new users; payment-method verification; trial quotas cannot be increased | Best free-credit candidate for benchmarking a persistent CPU VM, subject to the account's actual quotas |
 | Oracle Always Free | Current detailed documentation lists 1500 A1 OCPU-hours and 9000 GB-hours/month, equivalent to 2 OCPUs and 12 GB; capacity may be unavailable | Useful free sustained compute if provisionable, but not a large CPU speedup by itself |
 | Colab free | Dynamic, unguaranteed resources; sessions at most 12 hours | Useful interactive experiments; unreliable for this entire long run |
+| Netcup RS 1000 G12 | 4 dedicated cores, 8 GB; €12.79/month on the displayed annual contract, with a +€2.59/month option for a one-month term (prices shown include 19% German VAT) | Lower-cost paid candidate; confirm local VAT, term, and actual performance before purchase |
 | Hetzner dedicated / auction | AX42-1 listed at €97.30/month plus €49 setup, excluding VAT and IPv4; limited AX41-1-LTD at €57.30/month and €0 setup, subject to availability | Candidate for sustained CPU work after a benchmark; auction hardware and offers vary |
 | Hetzner CCX33 | 8 dedicated vCPUs, 32 GB; Germany/Finland €0.2219/hour, €138.49/month cap, excluding VAT and IPv4 | Flexible short benchmark; availability must be checked |
 | AWS EC2 Spot | Advertised savings up to 90% off on-demand; instances can be interrupted | Potential value after benchmarking, with persistent prefixes and restart procedures; no fixed price assumed |
@@ -64,6 +65,7 @@ or fast 10¹⁵ run.
 Sources: [Google trial conditions](https://docs.cloud.google.com/free/docs/free-cloud-features),
 [Oracle detailed resource limits](https://docs.oracle.com/en-us/iaas/Content/FreeTier/freetier_topic-Always_Free_Resources.htm),
 [Colab FAQ](https://research.google.com/colaboratory/faq.html),
+[Netcup offer and contract options](https://www.netcup.com/en/server/root-server/rs-1000-g12-ip-iv-12m),
 [Hetzner June 2026 price schedule](https://docs.hetzner.com/general/infrastructure-and-availability/price-adjustment/),
 [Hetzner CCX specifications](https://www.hetzner.com/cloud/general-purpose/),
 [AWS Spot guidance](https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/spot-best-practices.html).
@@ -96,3 +98,5 @@ python3 tools/run_extension.py --limit 10000000000000 \
 ```
 
 The wrapper does not provision servers, incur cloud charges, or publish results.
+
+For the free-credit option, see the [prepared one-hour Google Cloud benchmark](google-cloud-trial.md).
