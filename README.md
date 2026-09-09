@@ -15,11 +15,15 @@ the asymptotic question.
 Set $a_0=0$ and $a_1=1$. Once $a_0,\ldots,a_k$ are chosen, take $a_{k+1}$ to be
 the smallest integer $n$ for which
 
-$$\#\{(i,j):0\leq i\leq j\leq k,\ j\geq1,\ a_i+a_j\leq n\}<n.$$
+```math
+\left|\{(i,j):0\leq i\leq j\leq k,\ j\geq1,\ a_i+a_j\leq n\}\right|<n.
+```
 
 For the resulting infinite sequence, write
 
-$$R(x)=\#\{(i,j):0\leq i\leq j,\ j\geq1,\ a_i+a_j\leq x\},\qquad E(x)=R(x)-x.$$
+```math
+R(x)=\left|\{(i,j):0\leq i\leq j,\ j\geq1,\ a_i+a_j\leq x\}\right|,\qquad E(x)=R(x)-x.
+```
 
 Pairs are unordered; diagonal pairs are included; pairs $(0,a_j)$ are included;
 the pair $(0,0)$ is excluded. The sequence starts
