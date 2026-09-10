@@ -84,6 +84,28 @@ class ToolTests(unittest.TestCase):
             second = subprocess.run(cmd, text=True, capture_output=True)
             self.assertNotEqual(second.returncode, 0)
 
+    def test_pipeline_with_cumulative_jumps_and_interval_audit(self):
+        with tempfile.TemporaryDirectory() as directory:
+            p = pathlib.Path(directory)
+            seed = p / "seed.csv"
+            seed.write_text("index,value\n1,1\n")
+            cmd = ["python3", str(ROOT / "tools/run_extension.py"), "--limit", "10000",
+                   "--seed", str(seed), "--output", str(p / "run"), "--workers", "2",
+                   "--block", "1024", "--audit-block", "127", "--audit-chunk", "2048",
+                   "--cumulative-jumps", "--interval-audit"]
+            result = subprocess.run(cmd, text=True, capture_output=True)
+            self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
+            state = json.loads((p / "run/pipeline.json").read_text())
+            generator = json.loads((p / "run/result_summary.json").read_text())
+            audit = json.loads((p / "run/audit.json").read_text())
+            self.assertEqual(state["stage"], "AUDITED")
+            self.assertEqual(state["audit_method"], "intervals")
+            self.assertTrue(state["cumulative_jumps"])
+            self.assertTrue(generator["cumulative_jumps"])
+            self.assertEqual(audit["method"], "endpoint_enclosures_and_histograms")
+            self.assertEqual(audit["positions_scanned"] + audit["positions_certified_by_enclosure"], 10000)
+            self.assertEqual(audit["E_limit"], generator["E"])
+
 
 if __name__ == "__main__":
     unittest.main()

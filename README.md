@@ -5,8 +5,8 @@
 Reproducible C++ computation and independent verification of the greedy sequence
 constructed by Kenneth Rosen, associated with [Erdős problem #954](https://www.erdosproblems.com/954).
 
-**Released, fully audited range: every integer through `1,000,000,000,000` (10¹²).**
-This includes **1,595,636 positive sequence terms**. The bounds 10¹³ and 10¹⁵ are
+**Released, fully audited range: every integer through `10,000,000,000,000` (10¹³).**
+This includes **5,044,644 positive sequence terms**. The bounds 10¹⁴ and 10¹⁵ are
 extension targets, **not completed datasets**. Finite computations do not settle
 the asymptotic question.
 
@@ -38,15 +38,17 @@ and [OEIS A390642](https://oeis.org/A390642).
 
 ## Download the data
 
-The [v1.0.0 release](https://github.com/cubres/erdos-954-computations/releases/tag/v1.0.0)
-contains compressed term and completed-gap CSVs. [The data manifest](data/manifest.json)
+The [v1.1.0 release](https://github.com/cubres/erdos-954-computations/releases/tag/v1.1.0)
+contains compressed term and completed-gap-length CSVs. [The data manifest](data/manifest.json)
 records compressed and uncompressed SHA-256 hashes, sizes, scope, and provenance.
-The [full audit report](data/audit_1e12.json) records verification of every integer,
+The [full audit report](data/audit_1e13.json) records verification of every integer,
 including every insertion and every position at which no insertion was made.
+Exact interval inequalities certify 99.55% of the range; histogram scans check
+the remainder. Both methods use the final term list independently of generation.
 
 ```sh
 python3 tools/fetch_data.py --output runs/data
-python3 tools/query.py runs/data/terms_1e12.csv.gz --limit 1000000000000 --x 1000000000000
+python3 tools/query.py runs/data/terms_1e13.csv.gz --limit 10000000000000 --x 10000000000000
 ```
 
 Add `--area` to return the exact cumulative error `sum_E = E(1) + ... + E(x)`.
@@ -56,18 +58,19 @@ keep large areas exact. Subtract two prefix areas to obtain an interval's area.
 
 | Audited quantity | Value |
 | --- | ---: |
-| Positive terms at or below 10¹² | 1,595,636 |
-| Last term at or below 10¹² | 999,090,255,890 |
-| R(10¹²) | 1,000,025,288,916 |
-| E(10¹²) | 25,288,916 |
-| Maximum E(x), 1 ≤ x ≤ 10¹² | 101,328,126 |
-| Position of that maximum (unique) | 843,375,334,188 |
-| Positions with E(x) = 0, 1 ≤ x ≤ 10¹² | 5,874,526 |
+| Positive terms at or below 10¹³ | 5,044,644 |
+| Last term at or below 10¹³ | 9,988,075,638,050 |
+| R(10¹³) | 10,000,134,675,635 |
+| E(10¹³) | 134,675,635 |
+| Maximum E(x), 1 ≤ x ≤ 10¹³ | 1,168,643,713 |
+| Positions of that maximum (exactly two) | 9,011,936,754,289 and 9,011,936,754,292 |
+| Positions with E(x) = 0, 1 ≤ x ≤ 10¹³ | 18,745,473 |
 
-The longest completed gap in the term list is 3,593,860,818, between
-954,510,269,998 and 958,104,130,816. Per-gap error areas and peaks are additional
-generator outputs; the historical independent audit did not individually
-certify those extra columns. See [formats and verification scope](docs/data.md).
+The longest completed gap is 40,444,422,225, between 8,996,426,031,585 and
+9,036,870,453,810. The new gap file contains endpoints and lengths only.
+The historical [v1.0.0 release](https://github.com/cubres/erdos-954-computations/releases/tag/v1.0.0)
+through 10¹² remains available, with its original gap-statistics format.
+See [formats and verification scope](docs/data.md).
 
 ## Build and reproduce
 
@@ -122,9 +125,11 @@ The extension pipeline continues to use the exhaustive `build/audit` by default.
 ## Extend or resume a computation
 
 ```sh
-gzip -dc runs/data/terms_1e12.csv.gz > runs/seed.csv
-./build/generate 10000000000000 runs/extension_1e13 134217728 runs/seed.csv 4
-./build/audit runs/extension_1e13_terms.csv 10000000000000 runs/audit_1e13.json 4 33554432
+gzip -dc runs/data/terms_1e13.csv.gz > runs/seed.csv
+python3 tools/run_extension.py --limit 100000000000000 \
+  --seed runs/seed.csv --output runs/extension_1e14 \
+  --workers 4 --block 2097152 --audit-block 262144 \
+  --cumulative-jumps --interval-audit --audit-chunk 4294967296
 ```
 
 The seed must contain a complete, correct prefix. The generator checks CSV
@@ -132,12 +137,13 @@ structure and the final contact, then recomputes from just after its last term.
 It does **not** fully verify the seed. The output includes the seed terms, so a
 completed output is a self-contained prefix suitable for the full auditor.
 
-The last argument controls histogram workers (default 1); use `-` instead of a
-seed filename to start from scratch with multiple workers. Only pair preparation
+For direct generator calls, the positional argument after the seed controls
+histogram workers (default 1), and the optional `--jump` flag follows it.
+Use `-` instead of a seed filename to start from scratch with multiple workers. Only pair preparation
 is parallel; benchmark worker counts and block sizes on the chosen hardware.
 
-`SIGINT`/`SIGTERM` request a stop after the current block (exit code 3). Progress
-JSON and flushed CSV are saved at least every 30 seconds at block boundaries.
+`SIGINT`/`SIGTERM` request a stop after the current block or jump (exit code 3).
+Progress JSON and flushed CSV are saved at the next such boundary after 30 seconds.
 To resume, use the saved CSV as the seed and choose a **new output prefix**.
 Existing outputs are never overwritten. After a hard kill or power failure, use
 a complete saved prefix; a truncated final CSV line is rejected. Persistent
@@ -151,7 +157,7 @@ before launching a large run.
 
 ## Repository contents
 
-- `src/`: optimized generator and independent auditor with strict input checks.
+- `src/`: optimized generator and two independent auditors with strict input checks.
 - `reference/`: unchanged historical programs used for the released 10¹² run.
 - `tools/`: checksummed downloads and exact count queries for CSV or gzip data.
 - `tests/`: direct-definition checks, comparison against the reference generator,

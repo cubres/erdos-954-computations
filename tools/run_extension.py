@@ -17,12 +17,20 @@ def main():
     parser.add_argument("--workers", type=int, default=4)
     parser.add_argument("--block", type=int, default=134217728)
     parser.add_argument("--audit-block", type=int, default=33554432)
+    parser.add_argument("--cumulative-jumps", action="store_true",
+                        help="enable exact cumulative endpoint jumps during generation")
+    parser.add_argument("--interval-audit", action="store_true",
+                        help="use interval certificates; --audit-block becomes the histogram leaf size")
+    parser.add_argument("--audit-chunk", type=int, default=4294967296,
+                        help="top-level chunk size for --interval-audit")
     args = parser.parse_args()
     root = pathlib.Path(__file__).resolve().parents[1]
     out = args.output.resolve()
     out.mkdir(parents=True, exist_ok=False)
     status_path = out / "pipeline.json"
-    state = {"target": args.limit, "started_unix": time.time(), "stage": "generation"}
+    state = {"target": args.limit, "started_unix": time.time(), "stage": "generation",
+             "cumulative_jumps": args.cumulative_jumps,
+             "audit_method": "intervals" if args.interval_audit else "exhaustive"}
     child = None
     interrupted = False
 
@@ -44,6 +52,11 @@ def main():
                         str(args.block), str(args.seed.resolve()), str(args.workers)]),
         ("audit", [str(root / "build/audit"), str(out / "result_terms.csv"), str(args.limit),
                    str(out / "audit.json"), str(args.workers), str(args.audit_block)])]
+    if args.cumulative_jumps:
+        commands[0][1].append("--jump")
+    if args.interval_audit:
+        commands[1][1][0] = str(root / "build/audit_intervals")
+        commands[1][1].append(str(args.audit_chunk))
     write()
     for stage, command in commands:
         if interrupted:

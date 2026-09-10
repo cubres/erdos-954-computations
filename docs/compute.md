@@ -1,13 +1,15 @@
 # Compute options and reproducible sizing
 
-Checked 2026-09-10. **Only 10¹² is currently released as fully audited.**
+Checked 2026-09-10. **10¹³ is currently released as fully audited.**
 Hardware estimates below are planning estimates, not completed computations.
 
 ## What limits this workload
 
-The generator enumerates positive pair arrivals and maintains a sequential greedy
-state. It now parallelizes the pair histogram, while bulk summation reduces
-sequential scanning. The independent final-list auditor also uses multiple cores.
+The generator maintains a sequential greedy state. Its optional cumulative
+endpoint jumps bypass intervals where the current surplus rules out insertion;
+elsewhere it enumerates positive pair arrivals using a parallel histogram.
+The optional interval auditor certifies long intervals by exact inequalities;
+the default auditor scans the full range. Both use multiple cores.
 There is no GPU implementation in this repository. Renting a GPU by itself will
 not accelerate these C++ executables.
 
@@ -27,6 +29,10 @@ Intel Core i5-7400, 4 cores at 3.00 GHz, 8 GiB RAM, C++17 with `-O3`.
 | --- | ---: |
 | Historical generator from 0 through 10¹² | 7937.69 s |
 | Historical full audit through 10¹², 4 workers | 3857.90 s |
+| Cumulative-jump generator from 0 through 10¹², 4 workers, block 2²⁰ | 304.707 s |
+| Interval audit through 10¹², 4 workers, leaf 2¹⁷ | 310.054 s |
+| Bulk/byte extension from the audited 10¹² seed through 10¹³, 4 workers, block 2²⁷ | 18323.6 s |
+| Interval audit through 10¹³, 4 workers, leaf 2¹⁸ | 1081.11 s |
 | Original generator through 10⁹, current short benchmark | 12.9648 s |
 | Initial bulk/byte generator through 10⁹ | 4.41102 s |
 | Current generator near 10¹², 1 worker, block 2²⁵ | 15.9019 s |
@@ -42,13 +48,21 @@ independent full audits of the new suffix**. The seed CSV parse/copy and histogr
 allocation precede the generator's internal timer. Full pipeline costs include
 those operations, logging, compression, and the separate audit.
 
-At the fastest observed local marginal rate (about 568 million positions/second),
+The cumulative-jump 10¹² run matched the historical audited term CSV byte for
+byte. It skipped 96.1% of positions using endpoint recounts. The interval audit
+matched every mathematical summary field in the exhaustive audit through 10¹².
+These were single trials, some concurrent with other jobs; they do not establish
+a controlled or uniform speedup factor. The 10¹³ release was generated before
+the new jump mode was available, and verified using the interval auditor.
+
+For the older bulk/byte mode, at the fastest short local marginal rate (about 568 million positions/second),
 the remaining interval to 10¹³ would take about 4.4 hours to generate **if that
 rate held**. A full audit adds substantial time. The same flat-rate extrapolation
 to 10¹⁵ is about 20.4 days of generation alone. Neither is an ETA: term counts,
 setup cost, block sizes, machine contention, and thermal conditions change.
-The short benchmark is enough to justify a 10¹³ trial, not a promise of a cheap
-or fast 10¹⁵ run.
+Those older extrapolations do not describe the new cumulative-jump mode. A
+staged 10¹⁴ extension is the next sizing experiment; its measurements should
+inform a 10¹⁵ run. No completed 10¹⁴ or 10¹⁵ dataset is claimed.
 
 ## Online options
 
@@ -82,7 +96,7 @@ costs, **not estimates that either duration reaches 10¹⁵**.
 2. Download and checksum the released prefix with `tools/fetch_data.py`.
 3. Benchmark at least a few billion positions near the current endpoint, varying
    workers and block size. Do not extrapolate a tiny run from zero alone.
-4. Extend to 10¹³ and independently audit it. Record hashes, commands, source
+4. Extend to 10¹⁴ and independently audit it. Record hashes, commands, source
    commit, and hardware. Use that larger run to revise the 10¹⁵ budget.
 5. Keep persistent backups. A process can resume from a complete CSV prefix;
    cloud VM disks or notebook files may disappear on termination.
@@ -92,11 +106,15 @@ The output directory must not already exist. It records logs and `pipeline.json`
 only stage `AUDITED` means both programs completed successfully.
 
 ```sh
-python3 tools/run_extension.py --limit 10000000000000 \
+python3 tools/run_extension.py --limit 100000000000000 \
   --seed runs/seed.csv --output runs/extension \
-  --workers 4 --block 134217728 --audit-block 33554432
+  --workers 4 --block 2097152 --audit-block 262144 \
+  --cumulative-jumps --interval-audit --audit-chunk 4294967296
 ```
 
-The wrapper does not provision servers, incur cloud charges, or publish results.
+Here `--audit-block` controls the interval auditor's histogram leaf size.
+Omit the two optimization flags to retain the original generation and exhaustive
+audit modes. The wrapper does not provision servers, incur cloud charges, or
+publish results.
 
 For the free-credit option, see the [prepared one-hour Google Cloud benchmark](google-cloud-trial.md).

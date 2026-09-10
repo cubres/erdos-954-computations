@@ -1,0 +1,53 @@
+{
+  "schema_version": 1,
+  "release": "v1.0.0",
+  "complete_through": 1000000000000,
+  "positive_terms": 1595636,
+  "last_term": 999090255890,
+  "license": "CC0-1.0",
+  "assets": [
+    {
+      "kind": "terms",
+      "filename": "terms_1e12.csv.gz",
+      "url": "https://github.com/cubres/erdos-954-computations/releases/download/v1.0.0/terms_1e12.csv.gz",
+      "bytes": 8410180,
+      "sha256": "80bf3919c8281159fcd4151e241949e776cc8d701c56472231eec35eca1cf10f",
+      "uncompressed_bytes": 31659339,
+      "uncompressed_sha256": "25454691a7b17881e0c758c7bc7fe42e42318607c03ce0a9c24500eda0a6d80c"
+    },
+    {
+      "kind": "gaps",
+      "filename": "gaps_1e12.csv.gz",
+      "url": "https://github.com/cubres/erdos-954-computations/releases/download/v1.0.0/gaps_1e12.csv.gz",
+      "bytes": 19506535,
+      "sha256": "e516283bc5dea7623d43673f74f15b103830feefed557a5fcfae3e4d29d06f81",
+      "uncompressed_bytes": 71235470,
+      "uncompressed_sha256": "56afe669f9c28d83fa183b8ef5af29d95c054e028cd84d1b8fb5fc896ab07a35"
+    }
+  ],
+  "historical_sources": [
+    {
+      "path": "reference/segmented.cpp",
+      "sha256": "d79f574d2e29b9e02f198dccd99d1fb84184f38256835647393d63cf445b7d2b"
+    },
+    {
+      "path": "reference/verify_offline_parallel.cpp",
+      "sha256": "b5db898b2c7da6fa39f4cd19fc1dbecb2ec4659354d2de9c3d152336af121c6d"
+    }
+  ],
+  "audit_report": "audit_1e12.json",
+  "generator_report": "generator_1e12.json",
+  "audit_1e12.json_sha256": "041a06dc882dbeea5e424129bdbb7e73fa1840ff01d6faebb23de304f8586b16",
+  "generator_1e12.json_sha256": "a20e3684d05d42d6c0c446c6a1bb886d74af9c05b87ba13d8d0ddba675a73a6a",
+  "packaging_checks": {
+    "term_rows": 1595636,
+    "gap_rows": 1595635,
+    "every_gap_endpoint_and_length_checked": true,
+    "largest_completed_gap": {
+      "length": 3593860818,
+      "left": 954510269998,
+      "right": 958104130816
+    },
+    "per_gap_error_statistics_independently_audited": false
+  }
+}
