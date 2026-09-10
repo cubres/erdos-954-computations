@@ -69,7 +69,7 @@ and separate comparisons.
 
 ## Costs and limits
 
-Pair arrivals are still enumerated individually. Near the measured endpoint
+The generator and exhaustive auditor enumerate pair arrivals individually. Near the measured endpoint
 there is approximately one pair arrival per integer on average. The bulk step
 reduces scanning overhead but does not remove this main scaling cost.
 Rebuilding partner ranges introduces additional work proportional to the term
@@ -79,6 +79,11 @@ of the histogram using the same immutable known prefix. All workers join before
 the sequential insertion phase begins. This parallelizes pair preparation, but
 repeats some pointer setup per worker, so benchmark worker and block counts.
 The final-list auditor parallelizes complete independently initialized blocks.
+
+The alternative [interval auditor](interval-audit.md) can avoid both the
+histogram and integer scan on regions certified by exact cumulative pair
+counts. It retains complete coverage and recounts the same error statistics;
+its advantage depends on the error profile and chosen leaf size.
 
 Historical reference programs are preserved for provenance and have fewer input
 guards. Their gap-area accumulator is 64-bit. Use them to reproduce the published

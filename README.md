@@ -93,6 +93,19 @@ It also recounts zero-error positions and the global error maximum. Monotone
 partner pointers avoid repeating binary searches for every pair row; the
 auditor still visits every integer in its declared range.
 
+An alternative independent auditor uses exact endpoint enclosures to certify
+whole intervals. It checks the same greedy decisions, zero-error count and
+global maximum, while scanning only intervals that its bounds cannot certify:
+
+```sh
+./build/audit_intervals runs/example_terms.csv 100000000 runs/interval_audit.json 2 4096 67108864
+```
+
+Its report distinguishes positions scanned from positions certified by an
+inequality. All integers in the declared range are covered. See the
+[correctness argument and tuning parameters](docs/interval-audit.md).
+The extension pipeline continues to use the exhaustive `build/audit` by default.
+
 ## Extend or resume a computation
 
 ```sh
