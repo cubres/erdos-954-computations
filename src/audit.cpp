@@ -13,6 +13,7 @@
 #include <string>
 #include <thread>
 #include <vector>
+#include "audit_histogram.hpp"
 using U = uint64_t;
 
 U number(const std::string& s) {
@@ -82,18 +83,7 @@ int main(int argc,char** argv) {
                     const U k=next.fetch_add(1);
                     if(k>=blocks) break;
                     const U low=1+k*block, high=std::min(limit+1,low+block);
-                    std::fill(hist.begin(),hist.end(),0);
-                    for(size_t i=0;i<a.size() && 2*a[i]<high;++i) {
-                        U lower=low>a[i]?low-a[i]:0, upper=high-a[i];
-                        auto begin=std::lower_bound(a.begin()+i,a.end(),lower);
-                        auto end=std::lower_bound(begin,a.end(),upper);
-                        for(auto it=begin;it!=end;++it) {
-                            auto& cell=hist[a[i]+*it-low];
-                            if(cell==std::numeric_limits<uint32_t>::max())
-                                throw std::runtime_error("histogram overflow");
-                            ++cell;
-                        }
-                    }
+                    erdos954::positive_pair_histogram(a,low,high,hist);
                     U count=cumulative(a,low-1);
                     if(count<low-1) throw std::runtime_error("negative initial error");
                     U previous=count-(low-1);

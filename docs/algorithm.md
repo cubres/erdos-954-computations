@@ -44,9 +44,16 @@ an input cap of 10¹⁵ and explicit cumulative/error overflow checks where need
 
 ## Independent audit
 
-The audit uses the complete final term list, a 32-bit histogram, and binary
-searches for the partner ranges. At the start of each block it independently
-computes `R(left-1)` using a two-pointer cumulative pair count. It then visits
+The audit uses the complete final term list and a 32-bit histogram. One initial
+binary search skips terms too large to contribute to the block. For row `i`,
+two moving pointers delimit partners `j>=i` satisfying
+`left <= a[i]+a[j] < right`. As `a[i]` increases, both value thresholds decrease;
+the pointers move backward, with the lower bound clipped at `i` to retain
+unordered counting and include each diagonal once. Range setup takes a linear
+number of pointer steps per block, plus the initial search and pair enumeration.
+
+At the start of each block the auditor independently computes `R(left-1)`
+using a two-pointer cumulative pair count. It then visits
 every integer, checking the surplus, required insertions, and forbidden
 insertions. Blocks can be assigned to separate threads; none imports running
 surplus state from the generator or from another audit block.
@@ -54,7 +61,11 @@ surplus state from the generator or from another audit block.
 The auditor shares the mathematical definition, not the bulk step or online
 insertion state. It is still software verification, not a formally checked proof
 of the implementation. Small tests also use a direct Python definition that
-recounts all pairs at every argument.
+recounts all pairs at every argument. Histogram tests compare against direct
+pair enumeration on all subsets of `{1,...,9}` and every interval with integer
+endpoints from 1 through 21, plus boundary cases near 10¹⁵: 107,622 comparisons.
+The historical binary-search auditor remains in `reference/` for reproduction
+and separate comparisons.
 
 ## Costs and limits
 

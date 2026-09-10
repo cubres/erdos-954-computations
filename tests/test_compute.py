@@ -33,6 +33,10 @@ def brute_force(limit):
 
 
 class ComputeTests(unittest.TestCase):
+    def test_audit_histogram_against_direct_enumeration(self):
+        result = run(ROOT / "build/test_audit_histogram")
+        self.assertIn("PASS histogram comparisons=", result.stdout)
+
     def setUp(self):
         self.tmp = tempfile.TemporaryDirectory()
         self.p = pathlib.Path(self.tmp.name)

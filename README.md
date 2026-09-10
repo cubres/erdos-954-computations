@@ -89,7 +89,9 @@ before describing a new range as audited.
 
 The auditor reconstructs pair sums from the final list, independently initializes
 each block, and checks every greedy decision and the nonnegativity of the error.
-It also recounts zero-error positions and the global error maximum.
+It also recounts zero-error positions and the global error maximum. Monotone
+partner pointers avoid repeating binary searches for every pair row; the
+auditor still visits every integer in its declared range.
 
 ## Extend or resume a computation
 
