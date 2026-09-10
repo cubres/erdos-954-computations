@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Exact R(x), E(x), A(x), and sequence-index queries. Python standard library only."""
+"""Exact counts, cumulative error areas, and index queries. Standard library only."""
 import argparse
 import bisect
 import csv
@@ -39,6 +39,29 @@ def count(a, x):
     return total
 
 
+def cumulative_error(a, x):
+    """Return sum(E(t), 1 <= t <= x) in O(A(x)) time and O(1) extra space.
+
+    A pair of sum s contributes x-s+1 to the cumulative count. The
+    decreasing right pointer maintains the sum of each eligible pair row.
+    All arithmetic uses Python integers, including areas beyond 64 bits.
+    """
+    j = bisect.bisect_right(a, x)
+    row_sum = sum(a[i] for i in range(j))
+    total = j * (x + 1) - row_sum  # weighted zero pairs
+    i = 0
+    while i < j:
+        while j > i and a[i] + a[j - 1] > x:
+            j -= 1
+            row_sum -= a[j]
+        if j <= i:
+            break
+        total += (j - i) * (x + 1 - a[i]) - row_sum
+        row_sum -= a[i]
+        i += 1
+    return total - x * (x + 1) // 2
+
+
 def main():
     p = argparse.ArgumentParser(description=__doc__)
     p.add_argument("terms")
@@ -46,7 +69,10 @@ def main():
     g = p.add_mutually_exclusive_group(required=True)
     g.add_argument("--x", type=int)
     g.add_argument("--index", type=int)
+    p.add_argument("--area", action="store_true", help="with --x, also return sum_E = sum(E(t), 1 <= t <= x)")
     args = p.parse_args()
+    if args.area and args.x is None:
+        p.error("--area is available only with --x")
     a = read_terms(args.terms)
     if args.limit < a[-1]:
         p.error("declared completeness bound precedes the last term")
@@ -55,6 +81,8 @@ def main():
             p.error("x must lie in the declared complete range")
         r = count(a, args.x)
         result = {"x": args.x, "A": bisect.bisect_right(a, args.x), "R": r, "E": r - args.x}
+        if args.area:
+            result["sum_E"] = cumulative_error(a, args.x)
     else:
         if not 0 <= args.index <= len(a):
             p.error("index outside this prefix")

@@ -1,4 +1,5 @@
 import importlib.util
+import gzip
 import json
 import pathlib
 import subprocess
@@ -34,6 +35,38 @@ class ToolTests(unittest.TestCase):
             expected = sum(with_zero[i] + with_zero[j] <= x
                            for j in range(1, len(with_zero)) for i in range(j + 1))
             self.assertEqual(query.count(a, x), expected)
+
+    def test_cumulative_error_matches_pointwise_definition(self):
+        for a in ([], [1], [1, 3, 5, 9, 13, 17, 24], [1, 2, 8, 100]):
+            with_zero = [0] + a
+            expected_area = 0
+            for x in range(201):
+                expected_count = sum(with_zero[i] + with_zero[j] <= x
+                                     for j in range(1, len(with_zero)) for i in range(j + 1))
+                expected_area += expected_count - x
+                self.assertEqual(query.cumulative_error(a, x), expected_area)
+
+    def test_cumulative_error_uses_arbitrary_precision(self):
+        x = 10 ** 15
+        # The two zero pairs have weights x and 2; the positive pairs
+        # (1,1) and (1,x-1) have weights x-1 and 1.
+        self.assertEqual(query.cumulative_error([1, x - 1], x),
+                         2 * x + 2 - x * (x + 1) // 2)
+
+    def test_area_query_cli_and_mode_validation(self):
+        with tempfile.TemporaryDirectory() as directory:
+            for suffix in (".csv", ".csv.gz"):
+                path = pathlib.Path(directory) / ("terms" + suffix)
+                opener = gzip.open if suffix.endswith("gz") else open
+                with opener(path, "wt") as stream:
+                    stream.write("index,value\n1,1\n2,3\n3,5\n4,9\n")
+                base = ["python3", str(ROOT / "tools/query.py"), str(path), "--limit", "9"]
+                result = subprocess.run(base + ["--x", "6", "--area"], text=True, capture_output=True)
+                self.assertEqual(result.returncode, 0, result.stderr)
+                self.assertEqual(json.loads(result.stdout), {"x": 6, "A": 3, "R": 7, "E": 1, "sum_E": 1})
+                invalid = subprocess.run(base + ["--index", "1", "--area"], text=True, capture_output=True)
+                self.assertNotEqual(invalid.returncode, 0)
+                self.assertIn("only with --x", invalid.stderr)
 
     def test_pipeline_reaches_audited_and_wont_overwrite(self):
         with tempfile.TemporaryDirectory() as directory:

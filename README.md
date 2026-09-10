@@ -49,6 +49,11 @@ python3 tools/fetch_data.py --output runs/data
 python3 tools/query.py runs/data/terms_1e12.csv.gz --limit 1000000000000 --x 1000000000000
 ```
 
+Add `--area` to return the exact cumulative error `sum_E = E(1) + ... + E(x)`.
+The query uses weighted pair sums in O(A(x)) time and constant extra space after
+loading the terms; it does not scan every integer through `x`. Python integers
+keep large areas exact. Subtract two prefix areas to obtain an interval's area.
+
 | Audited quantity | Value |
 | --- | ---: |
 | Positive terms at or below 10¹² | 1,595,636 |
