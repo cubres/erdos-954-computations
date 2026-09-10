@@ -87,6 +87,45 @@ class ComputeTests(unittest.TestCase):
         self.assertEqual(full.read_bytes(), resumed.read_bytes())
         self.audit(resumed, 500000, 3, 8192)
 
+    def test_cumulative_jumps_match_reference_and_resume(self):
+        limit = 100_000_000
+        ref = self.p / "jump-reference"
+        run(ROOT / "build/reference", limit, ref, 262144)
+        expected = pathlib.Path(str(ref) + "_terms.csv").read_bytes()
+        seed = self.generate("jump-seed", 100003, 319)
+        for workers, start in ((1, "-"), (4, seed)):
+            prefix = self.p / f"jump-{workers}"
+            run(ROOT / "build/generate", limit, prefix, 65536, start, workers, "--jump")
+            path = pathlib.Path(str(prefix) + "_terms.csv")
+            self.assertEqual(path.read_bytes(), expected)
+            summary = json.loads(pathlib.Path(str(prefix) + "_summary.json").read_text())
+            self.assertTrue(summary["cumulative_jumps"])
+            self.assertGreater(summary["cumulative_jump_queries"], 0)
+            self.assertLessEqual(summary["bulk_positions"] + summary["cumulative_jump_positions"],
+                                 limit - summary["seed_last"])
+            audit = self.audit(path, limit, 2, 1048576)
+            self.assertEqual(summary["E"], audit["E_limit"])
+
+    def test_cumulative_jump_stop_and_resume(self):
+        seed = self.generate("jump-stop-seed", 1000, 97)
+        prefix = self.p / "jump-stopped"
+        process = subprocess.Popen([str(ROOT / "build/generate"), "1000000000000000",
+                                    str(prefix), "65536", str(seed), "2", "--jump"],
+                                   text=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+        self.assertIn("RUNNING", process.stdout.readline())
+        process.terminate()
+        stdout, stderr = process.communicate(timeout=15)
+        self.assertEqual(process.returncode, 3, stdout + stderr)
+        status = json.loads(pathlib.Path(str(prefix) + "_summary.json").read_text())
+        self.assertTrue(status["cumulative_jumps"])
+        self.assertEqual(status["status"], "STOPPED")
+        target = status["processed_through"] + 1000
+        resumed = self.p / "jump-after-stop"
+        run(ROOT / "build/generate", target, resumed, 4096,
+            pathlib.Path(str(prefix) + "_terms.csv"), 2, "--jump")
+        full = self.generate("jump-stop-full", target, 1024)
+        self.assertEqual(full.read_bytes(), pathlib.Path(str(resumed) + "_terms.csv").read_bytes())
+
     def test_parallel_generator(self):
         limit = 5000000
         single = self.generate("single", limit, 1048576)

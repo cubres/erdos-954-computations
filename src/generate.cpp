@@ -57,8 +57,10 @@ static U cumulative(const std::vector<U>& a, U x) {
 
 int main(int argc, char** argv) {
     try {
+        const bool cumulative_jumps=argc>1 && std::string(argv[argc-1])=="--jump";
+        if (cumulative_jumps) --argc;
         if (argc<3 || argc>6) {
-            std::cerr << "usage: generate LIMIT OUTPUT_PREFIX [BLOCK [SEED_CSV|- [WORKERS]]]\n";
+            std::cerr << "usage: generate LIMIT OUTPUT_PREFIX [BLOCK [SEED_CSV|- [WORKERS]]] [--jump]\n";
             return 2;
         }
         const U limit=number(argv[1]), block=argc>3 ? number(argv[3]) : 33554432;
@@ -84,6 +86,7 @@ int main(int argc, char** argv) {
         for (size_t i=0; i<a.size(); ++i) terms << i+1 << ',' << a[i] << '\n';
         std::vector<uint8_t> hist(std::min(block,limit));
         U error=0, processed=seed_last, bulk_positions=0;
+        U cumulative_jump_positions=0, cumulative_jump_queries=0, histogram_blocks=0;
         const auto start=std::chrono::steady_clock::now();
         auto last_report=start;
         const auto report=[&](const char* status) {
@@ -98,6 +101,10 @@ int main(int argc, char** argv) {
                 << ",\"last_term\":" << (a.empty()?0:a.back()) << ",\"E\":" << error
                 << ",\"seed_last\":" << seed_last << ",\"seed_terms\":" << seed_terms
                 << ",\"block\":" << block << ",\"bulk_positions\":" << bulk_positions
+                << ",\"cumulative_jumps\":" << (cumulative_jumps?"true":"false")
+                << ",\"cumulative_jump_positions\":" << cumulative_jump_positions
+                << ",\"cumulative_jump_queries\":" << cumulative_jump_queries
+                << ",\"histogram_blocks\":" << histogram_blocks
                 << ",\"workers\":" << workers
                 << ",\"seconds\":" << seconds << ",\"independently_audited\":false}\n";
             out.close();
@@ -108,7 +115,23 @@ int main(int argc, char** argv) {
         std::signal(SIGINT,stop);
         std::signal(SIGTERM,stop);
         report("RUNNING");
-        for (U left=seed_last+1; left<=limit && !stop_requested; left+=block) {
+        for (U left=seed_last+1; left<=limit && !stop_requested;) {
+            if (cumulative_jumps && error>=std::max<U>(1024,2*a.size())) {
+                // No insertion is possible in the next min(E, remaining)
+                // positions. Recount the endpoint from the unchanged prefix.
+                const U span=std::min(error,limit-processed);
+                const U target=processed+span;
+                const U count=cumulative(a,target);
+                if (count<target) throw std::runtime_error("negative jump endpoint error");
+                error=count-target; processed=target; left=processed+1;
+                cumulative_jump_positions+=span; ++cumulative_jump_queries;
+                const auto now=std::chrono::steady_clock::now();
+                if (std::chrono::duration<double>(now-last_report).count()>=30) {
+                    report("RUNNING"); last_report=now;
+                }
+                continue;
+            }
+            ++histogram_blocks;
             const U right=std::min(limit+1,left+block), len=right-left;
             std::fill(hist.begin(),hist.begin()+len,0);
             auto inc=[&](U idx) {
@@ -172,7 +195,7 @@ int main(int argc, char** argv) {
                     ++x;
                 }
             }
-            processed=right-1;
+            processed=right-1; left=right;
             const auto now=std::chrono::steady_clock::now();
             if (std::chrono::duration<double>(now-last_report).count()>=30) {
                 report("RUNNING"); last_report=now;

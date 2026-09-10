@@ -87,6 +87,19 @@ bulk summation optimization and checks its final cumulative count independently.
 **Generator completion is not full verification:** run the separate auditor
 before describing a new range as audited.
 
+Append `--jump` to enable cumulative endpoint jumps between histogram blocks:
+
+```sh
+./build/generate 1000000000 runs/jump_example 65536 - 4 --jump
+```
+
+When the surplus is large enough to rule out every insertion in the next
+interval, this mode recounts its endpoint directly and avoids enumerating its
+pair arrivals. The ordinary histogram path handles the remaining positions.
+The [correctness argument](docs/algorithm.md#cumulative-endpoint-jumps) uses an
+exact surplus inequality. The optimization is optional; the default generator
+and extension pipeline retain their existing behavior.
+
 The auditor reconstructs pair sums from the final list, independently initializes
 each block, and checks every greedy decision and the nonnegativity of the error.
 It also recounts zero-error positions and the global error maximum. Monotone

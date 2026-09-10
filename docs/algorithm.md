@@ -42,6 +42,34 @@ before changing the cell. If the bound 255 is reached, generation fails rather
 than producing wrapped counts. All value arithmetic is unsigned 64-bit, with
 an input cap of 10¹⁵ and explicit cumulative/error overflow checks where needed.
 
+## Cumulative endpoint jumps
+
+The optional trailing `--jump` flag applies the same no-insertion bound before
+building the next histogram. Suppose the sequence is known through integer
+`x` and its exact surplus there is `e=E(x)>0`. For any `1<=h<=e`, no new term
+can occur in `(x,x+h]`: before the first hypothetical insertion `x+t`, the
+surplus is at least `e-(t-1)>=1`, since arrivals are nonnegative. This
+contradicts the insertion rule.
+
+Therefore the known term prefix already determines `R(x+h)` completely.
+The generator can compute it with a linear two-pointer pair count, set
+`E(x+h)=R(x+h)-(x+h)`, and continue from that endpoint. No intermediate
+pair arrivals need to be enumerated. The last step `h=e` is safe too:
+its preceding surplus is at least 1, although its ending surplus may be zero.
+
+The implementation uses `h=min(e,LIMIT-x)` and enables this path when
+`e>=max(1024,2*A(x))`. That threshold is a performance choice, not a
+mathematical hypothesis. Smaller-surplus regions use the existing histogram
+algorithm. Setting the next block's origin to the processed endpoint plus
+one covers all integers without gaps or overlap. Stopping and prefix-based
+resumption work in either mode.
+
+The generator summary separately records `cumulative_jump_positions`,
+`cumulative_jump_queries`, and `histogram_blocks`. Its existing
+`bulk_positions` counts only skips inside built histograms. Neither kind of
+skip recovers intermediate maxima or zero-error counts; an independent audit
+is still required. This method supplies no asymptotic bound for the error.
+
 ## Independent audit
 
 The audit uses the complete final term list and a 32-bit histogram. One initial
