@@ -1,6 +1,6 @@
 # Compute options and reproducible sizing
 
-Checked 2026-09-10. **10¹³ is currently released as fully audited.**
+Checked 2026-09-10. **10¹⁴ is currently released as fully audited.**
 Hardware estimates below are planning estimates, not completed computations.
 
 ## What limits this workload
@@ -33,6 +33,8 @@ Intel Core i5-7400, 4 cores at 3.00 GHz, 8 GiB RAM, C++17 with `-O3`.
 | Interval audit through 10¹², 4 workers, leaf 2¹⁷ | 310.054 s |
 | Bulk/byte extension from the audited 10¹² seed through 10¹³, 4 workers, block 2²⁷ | 18323.6 s |
 | Interval audit through 10¹³, 4 workers, leaf 2¹⁸ | 1081.11 s |
+| Cumulative-jump extension from the audited 10¹³ seed through 10¹⁴, 4 workers, block 2²¹ | 8131.7 s |
+| Interval audit through 10¹⁴, 4 workers, leaf 2¹⁸, chunk 2³² | 8802.73 s |
 | Original generator through 10⁹, current short benchmark | 12.9648 s |
 | Initial bulk/byte generator through 10⁹ | 4.41102 s |
 | Current generator near 10¹², 1 worker, block 2²⁵ | 15.9019 s |
@@ -54,15 +56,23 @@ matched every mathematical summary field in the exhaustive audit through 10¹².
 These were single trials, some concurrent with other jobs; they do not establish
 a controlled or uniform speedup factor. The 10¹³ release was generated before
 the new jump mode was available, and verified using the interval auditor.
+The subsequent 10¹⁴ extension used cumulative jumps and passed a separate
+full-range interval audit. Its generator skipped 89,560,164,266,718 positions
+by endpoint jumps and 443,279,895,203 by bulk steps. The audit certified
+99,809,442,283,520 positions by enclosures and scanned 190,557,716,480 positions
+in histogram leaves. Generation and auditing took about 2.26 and 2.45 hours,
+respectively, with other development work sharing the machine.
 
 For the older bulk/byte mode, at the fastest short local marginal rate (about 568 million positions/second),
 the remaining interval to 10¹³ would take about 4.4 hours to generate **if that
 rate held**. A full audit adds substantial time. The same flat-rate extrapolation
 to 10¹⁵ is about 20.4 days of generation alone. Neither is an ETA: term counts,
 setup cost, block sizes, machine contention, and thermal conditions change.
-Those older extrapolations do not describe the new cumulative-jump mode. A
-staged 10¹⁴ extension is the next sizing experiment; its measurements should
-inform a 10¹⁵ run. No completed 10¹⁴ or 10¹⁵ dataset is claimed.
+Those older extrapolations do not describe the new cumulative-jump mode.
+The completed 10¹⁴ measurements above provide a larger sizing sample, but
+cannot be scaled linearly into a reliable 10¹⁵ ETA. Pair counts, endpoint-query
+work, and the fraction of intervals needing histogram scans all change.
+No completed 10¹⁵ dataset is claimed.
 
 ## Online options
 
@@ -96,8 +106,8 @@ costs, **not estimates that either duration reaches 10¹⁵**.
 2. Download and checksum the released prefix with `tools/fetch_data.py`.
 3. Benchmark at least a few billion positions near the current endpoint, varying
    workers and block size. Do not extrapolate a tiny run from zero alone.
-4. Extend to 10¹⁴ and independently audit it. Record hashes, commands, source
-   commit, and hardware. Use that larger run to revise the 10¹⁵ budget.
+4. Use the completed 10¹⁴ measurements to size a 10¹⁵ extension and its separate
+   audit. Record hashes, commands, source commit, and hardware for each new run.
 5. Keep persistent backups. A process can resume from a complete CSV prefix;
    cloud VM disks or notebook files may disappear on termination.
 
@@ -106,7 +116,7 @@ The output directory must not already exist. It records logs and `pipeline.json`
 only stage `AUDITED` means both programs completed successfully.
 
 ```sh
-python3 tools/run_extension.py --limit 100000000000000 \
+python3 tools/run_extension.py --limit 1000000000000000 \
   --seed runs/seed.csv --output runs/extension \
   --workers 4 --block 2097152 --audit-block 262144 \
   --cumulative-jumps --interval-audit --audit-chunk 4294967296

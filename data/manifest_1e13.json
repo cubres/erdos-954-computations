@@ -1,0 +1,88 @@
+{
+  "schema_version": 1,
+  "release": "v1.1.0",
+  "complete_through": 10000000000000,
+  "positive_terms": 5044644,
+  "last_term": 9988075638050,
+  "license": "CC0-1.0",
+  "assets": [
+    {
+      "kind": "terms",
+      "filename": "terms_1e13.csv.gz",
+      "bytes": 26995111,
+      "sha256": "c99cb87839b24b55782bf792b98265c16c0f9d99c9ccf91c97c2996603c3121e",
+      "uncompressed_bytes": 107537515,
+      "uncompressed_sha256": "4b1ce6081cd0933bcc3950a0930bad02755676f7ae1196d88f2977ae8795e8b3",
+      "url": "https://github.com/cubres/erdos-954-computations/releases/download/v1.1.0/terms_1e13.csv.gz"
+    },
+    {
+      "kind": "gap_lengths",
+      "filename": "gap_lengths_1e13.csv.gz",
+      "bytes": 41811318,
+      "sha256": "82b227ab3ccaaa09599153af90ac90578b756fa8ca4cf72a9c59469f6db389f0",
+      "uncompressed_bytes": 191423763,
+      "uncompressed_sha256": "c0ae0f50c436c19a09bf47fffa337264b585e4b08a4ed4c7a06e50f55d95937e",
+      "url": "https://github.com/cubres/erdos-954-computations/releases/download/v1.1.0/gap_lengths_1e13.csv.gz"
+    }
+  ],
+  "audit_report": "audit_1e13.json",
+  "generator_report": "generator_1e13.json",
+  "audit_1e13.json_sha256": "7d4bcc48eeda1491fbf4cc92e26afcee98ddd8b9225cf434e6f5678537b83837",
+  "generator_1e13.json_sha256": "4c330a6b3568dbec28ef91504f2861a2f856d7d9718854d55b73cf27338045c2",
+  "audit_provenance": {
+    "method": "endpoint_enclosures_and_histograms",
+    "source_commit": "c8308baca90c65dae703784879af73f4dde7a658",
+    "source_file": "src/audit_intervals.cpp",
+    "source_sha256": "fbb3c844a4a3b5bcd7a352a66f613465cdbe689d6a48f7baf73595d2fa4db0de",
+    "histogram_file": "src/audit_histogram.hpp",
+    "histogram_sha256": "8140c7d55ee1230dc85dd27e32fc6ddbe26213f13508bc2738953dc7f577cc70",
+    "binary_sha256": "94f10d5a260dfd5a84a25c2437a7fbc7b32c491581b7fa3e274e6b31c2943b86",
+    "workers": 4,
+    "leaf": 262144,
+    "chunk": 4294967296,
+    "positions_scanned": 44912607232,
+    "positions_certified_by_enclosure": 9955087392768,
+    "exhaustive_crosschecks_through": 1000000000000,
+    "full_exhaustive_audit_of_1e13_completed": false
+  },
+  "generation_provenance": {
+    "matching_source_snapshot_commit": "56c3d1c12244ee9d282f3f4c9e3c7419fbb6f9a9",
+    "source_file": "src/generate.cpp",
+    "source_sha256": "7a9b31a39fd486041565d8eb261fe82b9e7e4eee41b3bb67e7aa32bc0e5c7652",
+    "binary_sha256": "2f8342aa3a071ecca005360d81243c239c531652883ebb4123151ba64f7c078a",
+    "seed_complete_through": 1000000000000,
+    "seed_terms_sha256": "25454691a7b17881e0c758c7bc7fe42e42318607c03ce0a9c24500eda0a6d80c",
+    "block": 134217728,
+    "workers": 4,
+    "cumulative_endpoint_jump_mode_used": false
+  },
+  "packaging_checks": {
+    "term_rows": 5044644,
+    "gap_rows": 5044643,
+    "every_gap_endpoint_and_length_checked": true,
+    "old_audited_prefix_rows_matched": 1595636,
+    "largest_completed_gap": {
+      "length": 40444422225,
+      "left": 8996426031585,
+      "right": 9036870453810,
+      "index": 4792953
+    },
+    "per_gap_error_statistics_included": false
+  },
+  "additional_exact_point_queries": {
+    "9011936754288": 1168643711,
+    "9011936754289": 1168643713,
+    "9011936754290": 1168643712,
+    "9011936754291": 1168643712,
+    "9011936754292": 1168643713,
+    "9011936754293": 1168643712,
+    "9988075638049": 0,
+    "9988075638050": 0,
+    "10000000000000": 134675635
+  },
+  "exact_maximizing_positions": [
+    9011936754289,
+    9011936754292
+  ],
+  "previous_release_manifest": "manifest_1e12.json"
+}

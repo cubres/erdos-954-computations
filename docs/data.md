@@ -1,8 +1,55 @@
 # Data, provenance, and verification scope
 
-## Current release: v1.1.0 through 10¹³
+## Current release: v1.2.0 through 10¹⁴
 
-The current data cover **every integer from 1 through 10¹³**, including the
+The current data cover **every integer from 1 through 10¹⁴**, including the
+tail after the last positive term, 99931466447235. There are 15,956,975 positive
+terms; the fixed initial zero is excluded from the CSV.
+
+| File | Meaning |
+| --- | --- |
+| `terms_1e14.csv.gz` | Gzip of `index,value`, one positive term per row |
+| `gap_lengths_1e14.csv.gz` | Gzip of `index,left,right,gap`, one consecutive positive-term pair per row |
+| `data/audit_1e14.json` | Independent interval audit, full stated range |
+| `data/generator_1e14.json` | Original generator endpoint report |
+| `data/manifest.json` | Current release hashes, sizes, source provenance, and extra exact queries |
+| `data/manifest_1e13.json` | Archived manifest for the previous release |
+
+All 15,956,974 completed-gap rows were separately checked against consecutive
+audited terms. The gap index is the left term's index. There is no initial
+0-to-1 row, no unfinished tail row, and no per-gap error area or peak column.
+The earlier 5,044,644-term audited prefix was checked row for row.
+
+The independent auditor certified 99,809,442,283,520 positions using exact
+endpoint enclosures and scanned the remaining 190,557,716,480 positions in
+histogram leaves. These counts sum to 10¹⁴. Every greedy decision, both sides
+of every contact, all zero-error positions, and the global maximum are covered.
+See [the interval-audit proof](interval-audit.md). This is a complete audit by
+the stated method; a separate full exhaustive scan of 10¹⁴ was not performed.
+The method was previously compared with exhaustive audit results through 10¹².
+
+The maximum error is 7,374,280,256, attained at exactly the five consecutive
+integers from 97529985405572 through 97529985405576. The independent auditor
+identified the first and last maximizers; separate Python pair-count queries
+checked every intervening integer and both neighbors. The manifest records
+those exact values and additional queries at the last contact and cutoff.
+The longest completed gap has length 299,712,984,412, from 97454293430918 to
+97754006415330, and its left term has index 15,768,573.
+
+Generation from the audited 10¹³ seed took 8131.7 seconds using cumulative
+endpoint jumps. The independent interval audit took 8802.73 seconds. Both ran
+on the Intel Core i5-7400 development machine with four workers; other work
+shared the machine. Source, binary and input hashes and all run parameters
+are recorded in the manifest. The generator report retains
+`independently_audited:false` because it describes generation alone; the
+separate `PASS` audit is the verification authority.
+
+For a historical release, pass `--manifest data/manifest_1e13.json` or
+`--manifest data/manifest_1e12.json` to `tools/fetch_data.py`.
+
+## Historical release: v1.1.0 through 10¹³
+
+The v1.1.0 data cover **every integer from 1 through 10¹³**, including the
 tail after the last positive term, 9988075638050. There are 5,044,644 positive
 terms; the fixed initial zero is excluded from the CSV.
 
@@ -12,7 +59,7 @@ terms; the fixed initial zero is excluded from the CSV.
 | `gap_lengths_1e13.csv.gz` | Gzip of `index,left,right,gap`, one consecutive positive-term pair per row |
 | `data/audit_1e13.json` | Independent interval audit, full stated range |
 | `data/generator_1e13.json` | Original generator endpoint report |
-| `data/manifest.json` | Current release hashes, sizes, source provenance, and extra exact queries |
+| `data/manifest_1e13.json` | Historical release hashes, sizes, source provenance, and extra exact queries |
 | `data/manifest_1e12.json` | Archived manifest for the previous release |
 
 The gap index is the left term's index, so row `n` describes `a_n` to `a_(n+1)`.
@@ -43,8 +90,8 @@ performance estimates. The generator report retains `independently_audited:false
 because it describes generation alone; the separate `PASS` audit is the
 verification authority.
 
-To fetch the historical files instead, pass
-`--manifest data/manifest_1e12.json` to `tools/fetch_data.py`.
+To fetch these historical files, pass
+`--manifest data/manifest_1e13.json` to `tools/fetch_data.py`.
 
 ## Historical release: v1.0.0 through 10¹²
 
