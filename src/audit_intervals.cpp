@@ -1,6 +1,8 @@
 // Independent interval audit of a supplied final term list.
 // Strict endpoint enclosures certify positive-error regions below an exact
 // witnessed maximum; all remaining intervals are inspected with histograms.
+// The optional decisions-only mode omits maximum checks and can audit a suffix
+// conditional on a separately verified, matching prefix.
 #include <algorithm>
 #include <atomic>
 #include <chrono>
@@ -44,17 +46,30 @@ struct Totals {
 
 int main(int argc, char** argv) {
     try {
-        if (argc<4 || argc>7) {
-            std::cerr<<"usage: audit_intervals TERM_CSV LIMIT OUTPUT_JSON [WORKERS] [LEAF] [CHUNK]\n";
+        if (argc<4) {
+            std::cerr<<"usage: audit_intervals TERM_CSV LIMIT OUTPUT_JSON [WORKERS] [LEAF] [CHUNK]"
+                     <<" [--decisions-only] [--start N]\n";
             return 2;
         }
         const U limit=number(argv[2]);
-        const U worker_arg=argc>4?number(argv[4]):3;
-        const U leaf=argc>5?number(argv[5]):1048576;
-        const U chunk=argc>6?number(argv[6]):1073741824;
+        U options[]={3,1048576,1073741824};
+        int arg=4;
+        for (unsigned pos=0;pos<3 && arg<argc && std::string(argv[arg]).rfind("--",0)!=0;++pos)
+            options[pos]=number(argv[arg++]);
+        bool decisions_only=false, has_start=false;
+        U start_exclusive=0;
+        while (arg<argc) {
+            const std::string option=argv[arg++];
+            if (option=="--decisions-only" && !decisions_only) decisions_only=true;
+            else if (option=="--start" && !has_start && arg<argc) {
+                has_start=true; start_exclusive=number(argv[arg++]);
+            } else throw std::runtime_error("unknown, duplicate, or incomplete audit option");
+        }
+        const U worker_arg=options[0], leaf=options[1], chunk=options[2];
         if (!limit || limit>1000000000000000ULL || !worker_arg || worker_arg>256 ||
-            !leaf || leaf>1073741824ULL || !chunk || chunk>1000000000000000ULL)
-            throw std::runtime_error("invalid limit, worker count, leaf size, or chunk size");
+            !leaf || leaf>1073741824ULL || !chunk || chunk>1000000000000000ULL ||
+            start_exclusive>=limit || (has_start && !decisions_only))
+            throw std::runtime_error("invalid limit, worker count, leaf size, chunk size, or start option");
         const unsigned workers=static_cast<unsigned>(worker_arg);
         if (std::filesystem::exists(argv[3])) throw std::runtime_error("output already exists");
         std::ifstream in(argv[1]);
@@ -73,6 +88,8 @@ int main(int argc, char** argv) {
         if (a.empty() || a.front()!=1 || a.back()>limit) throw std::runtime_error("invalid term endpoints");
         for (size_t i=1;i<a.size();++i)
             if (a[i]<=a[i-1]) throw std::runtime_error("terms not strictly increasing");
+        const U range_length=limit-start_exclusive;
+        const size_t prefix_terms=std::upper_bound(a.begin(),a.end(),start_exclusive)-a.begin();
         const auto start=std::chrono::steady_clock::now();
         std::atomic<U> witnessed_maximum{0};
         auto observe=[&](U e) {
@@ -81,14 +98,14 @@ int main(int argc, char** argv) {
         };
         // These exact values are lower bounds for the maximum. They are never
         // used to count maximizing positions; every final maximizer is scanned.
-        const U samples=std::min<U>(64,limit);
+        const U samples=decisions_only?0:std::min<U>(64,limit);
         for (U s=1;s<=samples;++s) {
             const U x=(limit/samples)*s+((limit%samples)*s)/samples;
             const U count=cumulative(a,x);
             if (count<x) throw std::runtime_error("negative error at sample "+std::to_string(x));
             observe(count-x);
         }
-        const U chunks=(limit-1)/chunk+1;
+        const U chunks=(range_length-1)/chunk+1;
         std::atomic<U> next{0}, completed{0};
         std::atomic<bool> failed{false};
         std::mutex message_mutex;
@@ -106,7 +123,10 @@ int main(int argc, char** argv) {
                     if (left<low-1 || right<high)
                         throw std::runtime_error("negative error at interval endpoint");
                     // For low<=x<=high, left-high <= E(x) <= right-low.
-                    if (left>high && right-low<witnessed_maximum.load(std::memory_order_relaxed)) {
+                    // A decision-only audit needs the strict lower enclosure,
+                    // but makes no claim about the maximum in skipped regions.
+                    if (left>high && (decisions_only ||
+                            right-low<witnessed_maximum.load(std::memory_order_relaxed))) {
                         auto term=std::lower_bound(a.begin(),a.end(),low);
                         if (term!=a.end() && *term<=high)
                             throw std::runtime_error("positive-error contact in certified interval");
@@ -154,7 +174,7 @@ int main(int argc, char** argv) {
                 while (!failed.load()) {
                     const U k=next.fetch_add(1);
                     if (k>=chunks) break;
-                    const U low=1+k*chunk, high=std::min(limit,low+chunk-1);
+                    const U low=start_exclusive+1+k*chunk, high=std::min(limit,low+chunk-1);
                     const U left=query(low-1), right=query(high);
                     visit(low,high,left,right);
                     const U done=completed.fetch_add(1)+1;
@@ -183,25 +203,39 @@ int main(int argc, char** argv) {
                 all.last=std::max(all.last,t.last);
             }
         }
-        if (all.terms!=a.size() || completed.load()!=chunks || all.scanned+all.certified!=limit ||
-            all.maximum!=witnessed_maximum.load() || !all.first)
+        if (all.terms!=a.size()-prefix_terms || completed.load()!=chunks ||
+            all.scanned+all.certified!=range_length ||
+            (!decisions_only && (all.maximum!=witnessed_maximum.load() || !all.first)))
             throw std::runtime_error("incomplete coverage or maximum accounting");
         const double seconds=std::chrono::duration<double>(std::chrono::steady_clock::now()-start).count();
         std::ofstream out(argv[3]);
         if (!out) throw std::runtime_error("cannot write output");
         out.exceptions(std::ios::badbit|std::ios::failbit);
-        out<<"{\"status\":\"PASS\",\"limit\":"<<limit<<",\"terms\":"<<all.terms
+        out<<"{\"status\":\"PASS\",\"limit\":"<<limit<<",\"terms\":"<<a.size()
            <<",\"R_limit\":"<<all.final_count<<",\"E_limit\":"<<all.final_count-limit
-           <<",\"maximum_error\":"<<all.maximum<<",\"first_maximizer\":"<<all.first
-           <<",\"last_maximizer\":"<<all.last<<",\"zero_error_positions\":"<<all.zeros
-           <<",\"all_contacts_checked\":true,\"all_greedy_decisions_checked\":true"
-           <<",\"method\":\"endpoint_enclosures_and_histograms\",\"positions_scanned\":"<<all.scanned
+           <<",\"start_exclusive\":"<<start_exclusive
+           <<",\"prefix_assumed_valid_through\":"<<start_exclusive
+           <<",\"range_terms_checked\":"<<all.terms
+           <<",\"maximum_evaluated\":"<<(decisions_only?"false":"true");
+        if (!decisions_only)
+            out<<",\"maximum_error\":"<<all.maximum<<",\"first_maximizer\":"<<all.first
+               <<",\"last_maximizer\":"<<all.last;
+        if (start_exclusive==0) out<<",\"zero_error_positions\":"<<all.zeros;
+        out<<",\"range_zero_error_positions\":"<<all.zeros
+           <<",\"all_contacts_checked\":"<<(start_exclusive==0?"true":"false")
+           <<",\"all_greedy_decisions_checked\":"<<(start_exclusive==0?"true":"false")
+           <<",\"all_range_contacts_checked\":true,\"all_range_greedy_decisions_checked\":true"
+           <<",\"method\":\""<<(decisions_only?"greedy_decision_enclosures_and_histograms":
+                                                    "endpoint_enclosures_and_histograms")<<"\""
+           <<",\"positions_scanned\":"<<all.scanned
            <<",\"positions_certified_by_enclosure\":"<<all.certified<<",\"pruned_intervals\":"<<all.pruned
            <<",\"histogram_leaves\":"<<all.leaves<<",\"interval_count_queries\":"<<all.queries
            <<",\"sample_queries\":"<<samples<<",\"workers\":"<<workers<<",\"leaf\":"<<leaf
            <<",\"chunk\":"<<chunk<<",\"seconds\":"<<seconds<<"}\n";
         out.close();
-        std::cout<<"PASS limit="<<limit<<" maximum="<<all.maximum<<" certified="<<all.certified
+        std::cout<<"PASS start_exclusive="<<start_exclusive<<" limit="<<limit;
+        if (!decisions_only) std::cout<<" maximum="<<all.maximum;
+        std::cout<<" certified="<<all.certified
                  <<" scanned="<<all.scanned<<" seconds="<<seconds<<"\n";
     } catch (const std::exception& e) {
         std::cerr<<"FAIL "<<e.what()<<"\n"; return 1;

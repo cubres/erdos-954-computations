@@ -122,6 +122,12 @@ global maximum, while scanning only intervals that its bounds cannot certify:
 Its report distinguishes positions scanned from positions certified by an
 inequality. All integers in the declared range are covered. See the
 [correctness argument and tuning parameters](docs/interval-audit.md).
+Add `--decisions-only` to verify every greedy decision without computing the
+maximum error. With that mode, `--start N` checks only `(N,LIMIT]`, conditional
+on an independently verified, exactly matching prefix through N. The input
+must be an immutable full-prefix CSV; the output distinguishes suffix checks
+from a whole-prefix audit. See the same correctness document for the scope
+and the required prefix comparison.
 The extension pipeline continues to use the exhaustive `build/audit` by default.
 
 ## Extend or resume a computation

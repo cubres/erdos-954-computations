@@ -2,7 +2,7 @@
 
 The interval auditor accepts a final positive-term CSV. It computes cumulative
 pair counts directly from that list and never imports the generator's surplus
-or arrival table. It certifies the same finite properties as the exhaustive
+or arrival table. By default it certifies the same finite properties as the exhaustive
 auditor: every greedy decision, every contact, the endpoint count, the number
 of zero-error positions, and the global maximum with its first and last positions.
 
@@ -108,5 +108,56 @@ The method does not assume a conjectural upper bound for E or use a supplied
 maximum. If the interval tests fail, it falls back to complete leaf scans.
 There is no uniform runtime improvement guarantee.
 
-The existing extension pipeline still invokes the exhaustive auditor.
-The interval auditor is a separately selectable verification method.
+## Verify decisions without computing the maximum
+
+Add `--decisions-only` to verify the sequence, endpoint count and zero-error
+count without locating the global maximum:
+
+~~~sh
+./build/audit_intervals TERM_CSV LIMIT OUTPUT_JSON 2 262144 4294967296 --decisions-only
+~~~
+
+In this mode the certificate needs only `L>r` and no listed term in `[l,r]`.
+The same proof above checks every decision and excludes every zero in a
+pruned interval. The upper comparison with a witnessed maximum is omitted.
+This can skip more work, but no particular speedup is guaranteed. The output
+sets `maximum_evaluated` to false and omits all three maximum fields. It must
+not be used as a certificate for the maximum or its locations.
+
+## Verify a suffix after an independently audited prefix
+
+With `--decisions-only`, `--start N` restricts the decision checks to
+the integer range `(N,LIMIT]`, where `0 <= N < LIMIT`:
+
+~~~sh
+./build/audit_intervals TERM_CSV LIMIT OUTPUT_JSON 1 262144 4294967296 --decisions-only --start 100000000000000
+~~~
+
+The CSV must still contain the **entire** positive-term prefix through LIMIT.
+Its earlier terms are needed to reconstruct pair sums in the suffix. Use an
+immutable completed snapshot; do not pass a file that a generator is appending
+to. Terms greater than LIMIT and incomplete lines are rejected.
+
+For N>0 the result is conditional on the supplied prefix through N already
+being correct. It does not verify that prerequisite or accept a generator's
+status as its proof. Before combining audits, check that the earlier CSV prefix
+matches the independently audited file exactly, including its hash and cutoff.
+Once that prerequisite holds, coverage and the exact decision checks throughout
+`(N,LIMIT]` extend the verified sequence through LIMIT by induction. N can lie
+inside a gap: the exact starting value R(N) is recounted from the full input.
+
+The report makes the scope explicit:
+
+- `start_exclusive` and `prefix_assumed_valid_through` are N;
+- `all_range_greedy_decisions_checked` and `all_range_contacts_checked` are true;
+- for N>0, the two corresponding whole-prefix flags are false;
+- `terms` is the full input count; `range_terms_checked` counts only terms above N;
+- `range_zero_error_positions` counts zeros in `(N,LIMIT]`; the whole-prefix
+  `zero_error_positions` field is absent when N>0;
+- scanned and certified position counts sum to `LIMIT-N`;
+- `R_limit` and `E_limit` are exact counts for the full supplied input.
+
+Omitting both new options preserves the full audit, including every maximum
+location. The extension pipeline still uses the exhaustive auditor by default,
+or this full interval audit when `--interval-audit` is selected. It does not
+automatically skip an earlier prefix.

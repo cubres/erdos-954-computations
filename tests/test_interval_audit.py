@@ -47,17 +47,67 @@ class IntervalAuditTests(unittest.TestCase):
         path.write_text("index,value\n"+"".join(f"{i},{v}\n" for i,v in enumerate(a,1)))
         return path
 
-    def audit(self,path,limit,workers=2,leaf=7,chunk=31,ok=True):
+    def audit(self,path,limit,workers=2,leaf=7,chunk=31,ok=True,
+              decisions_only=False,start=None):
         self.counter+=1
         out=self.p/f"audit-{self.counter}.json"
-        result=call(ROOT/"build/audit_intervals",path,limit,out,workers,leaf,chunk)
+        options=[]
+        if decisions_only:
+            options.append("--decisions-only")
+        if start is not None:
+            options.extend(("--start",start))
+        result=call(ROOT/"build/audit_intervals",path,limit,out,workers,leaf,chunk,*options)
         self.assertEqual(result.returncode==0,ok,result.stdout+result.stderr)
         if not ok:
             self.assertFalse(out.exists())
             return
         data=json.loads(out.read_text())
-        self.assertEqual(data["positions_scanned"]+data["positions_certified_by_enclosure"],limit)
+        self.assertEqual(data["positions_scanned"]+data["positions_certified_by_enclosure"],
+                         limit-(start or 0))
         return data
+
+    def test_decisions_only_and_range_boundaries(self):
+        limit=500
+        a=direct_sequence(limit)
+        path=self.write("valid.csv",a)
+        expected=direct_metrics(a,limit)
+        for start in (None,0,1,2,3,6,7,13,24,25,33,47,499):
+            for workers,leaf,chunk in ((1,1,17),(3,7,31)):
+                with self.subTest(start=start,workers=workers):
+                    got=self.audit(path,limit,workers,leaf,chunk,
+                                   decisions_only=True,start=start)
+                    lo=start or 0
+                    self.assertFalse(got["maximum_evaluated"])
+                    for field in ("maximum_error","first_maximizer","last_maximizer"):
+                        self.assertNotIn(field,got)
+                    self.assertEqual(got["prefix_assumed_valid_through"],lo)
+                    self.assertEqual(got["all_greedy_decisions_checked"],lo==0)
+                    self.assertEqual(got["all_contacts_checked"],lo==0)
+                    self.assertTrue(got["all_range_greedy_decisions_checked"])
+                    self.assertTrue(got["all_range_contacts_checked"])
+                    self.assertEqual(got["range_terms_checked"],sum(v>lo for v in a))
+                    for field in ("terms","R_limit","E_limit"):
+                        self.assertEqual(got[field],expected[field])
+                    values=[0]+a
+                    zeros=sum(sum(values[i]+values[j]<=x
+                                  for j in range(1,len(values)) for i in range(j+1))==x
+                              for x in range(lo+1,limit+1))
+                    self.assertEqual(got["range_zero_error_positions"],zeros)
+                    if lo:
+                        self.assertNotIn("zero_error_positions",got)
+                    else:
+                        self.assertEqual(got["zero_error_positions"],zeros)
+
+    def test_every_suffix_candidate_with_an_audited_prefix(self):
+        limit=8
+        correct=direct_sequence(limit)
+        for start in (1,3,6,7):
+            prefix=[v for v in correct if v<=start]
+            for mask in range(1<<(limit-start)):
+                a=prefix+[v for v in range(start+1,limit+1)
+                          if mask&(1<<(v-start-1))]
+                self.audit(self.write("candidate.csv",a),limit,1,2,3,
+                           decisions_only=True,start=start,ok=a==correct)
 
     def test_direct_definition_and_metrics(self):
         for limit in (1,2,3,7,33,500):
@@ -89,6 +139,11 @@ class IntervalAuditTests(unittest.TestCase):
         self.assertGreater(got["positions_certified_by_enclosure"],0)
         self.assertGreater(got["positions_scanned"],0)
         self.assertEqual({k:got[k] for k in FIELDS},{k:expected[k] for k in FIELDS})
+        decisions=self.audit(path,limit,2,4096,67108864,decisions_only=True)
+        self.assertGreater(decisions["positions_certified_by_enclosure"],0)
+        self.assertGreater(decisions["positions_scanned"],0)
+        for field in ("terms","R_limit","E_limit","zero_error_positions"):
+            self.assertEqual(decisions[field],expected[field])
         with path.open() as stream:
             a=[int(row["value"]) for row in csv.DictReader(stream)]
         extra=90000000
@@ -98,6 +153,8 @@ class IntervalAuditTests(unittest.TestCase):
                              ("last",a[:-1]),("spurious",sorted(a+[extra])),
                              ("shifted",a[:-1]+[a[-1]+1])):
             self.audit(self.write(name+".csv",altered),limit,2,4096,67108864,ok=False)
+            self.audit(self.write(name+".csv",altered),limit,2,4096,67108864,
+                       decisions_only=True,ok=False)
 
     def test_invalid_inputs_and_no_overwrite(self):
         path=self.p/"bad.csv"
@@ -112,6 +169,15 @@ class IntervalAuditTests(unittest.TestCase):
         result=call(ROOT/"build/audit_intervals",path,100,out)
         self.assertNotEqual(result.returncode,0)
         self.assertEqual(out.read_text(),"preserve me\n")
+        for options in (("--start","3"),("--decisions-only","--start","100"),
+                        ("--decisions-only","--start","101"),("--start",),
+                        ("--decisions-only","--start","-1"),("--unknown",),
+                        ("--decisions-only","--decisions-only"),
+                        ("--decisions-only","--start","1","--start","2")):
+            unused=self.p/"invalid-options.json"
+            result=call(ROOT/"build/audit_intervals",path,100,unused,*options)
+            self.assertNotEqual(result.returncode,0,result.stdout+result.stderr)
+            self.assertFalse(unused.exists())
 
 
 if __name__=="__main__":
