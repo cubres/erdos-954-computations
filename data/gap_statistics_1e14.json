@@ -1,0 +1,458 @@
+{
+  "schema_version": 1,
+  "input": {
+    "filename": "result_terms.csv",
+    "gzip": false,
+    "uncompressed_sha256": "005471d985877cb19fc3941de4c1e37d43d03c876d17c6052a916afecd436bf1",
+    "uncompressed_bytes": 364478104,
+    "positive_terms": 15956975,
+    "last_term": 99931466447235
+  },
+  "declared_complete_through": 100000000000000,
+  "summarized_through": 100000000000000,
+  "independently_audited_by_this_tool": false,
+  "boundary_policy": {
+    "gaps": "consecutive positive terms (p,q), with q <= summarized_through",
+    "decade": "10^k <= p < 10^(k+1), including gaps crossing a decade boundary",
+    "normalization": "strict g^2 > t^2*p, where g=q-p and t is the threshold",
+    "excluded": "initial gap (0,1) and every unfinished tail",
+    "completeness": "caller-supplied limit; structural validation is not an audit"
+  },
+  "normalized_thresholds": [
+    1,
+    2,
+    4,
+    8,
+    16,
+    32,
+    64,
+    128,
+    256,
+    512,
+    1024
+  ],
+  "positive_terms_through_cutoff": 15956975,
+  "completed_gaps": 15956974,
+  "decades": [
+    {
+      "left_at_least": 1,
+      "left_below": 10,
+      "gaps": 4,
+      "sum_length": 12,
+      "min_length": 2,
+      "max_length": 4,
+      "first_maximum": {
+        "index": 3,
+        "left": 5,
+        "right": 9
+      },
+      "above_normalized_threshold": [
+        4,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0
+      ],
+      "mean_length": {
+        "numerator": 12,
+        "denominator": 4
+      }
+    },
+    {
+      "left_at_least": 10,
+      "left_below": 100,
+      "gaps": 11,
+      "sum_length": 99,
+      "min_length": 4,
+      "max_length": 15,
+      "first_maximum": {
+        "index": 15,
+        "left": 97,
+        "right": 112
+      },
+      "above_normalized_threshold": [
+        11,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0
+      ],
+      "mean_length": {
+        "numerator": 99,
+        "denominator": 11
+      }
+    },
+    {
+      "left_at_least": 100,
+      "left_below": 1000,
+      "gaps": 33,
+      "sum_length": 888,
+      "min_length": 2,
+      "max_length": 93,
+      "first_maximum": {
+        "index": 48,
+        "left": 907,
+        "right": 1000
+      },
+      "above_normalized_threshold": [
+        19,
+        9,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0
+      ],
+      "mean_length": {
+        "numerator": 888,
+        "denominator": 33
+      }
+    },
+    {
+      "left_at_least": 1000,
+      "left_below": 10000,
+      "gaps": 111,
+      "sum_length": 9177,
+      "min_length": 2,
+      "max_length": 398,
+      "first_maximum": {
+        "index": 151,
+        "left": 8904,
+        "right": 9302
+      },
+      "above_normalized_threshold": [
+        49,
+        33,
+        8,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0
+      ],
+      "mean_length": {
+        "numerator": 9177,
+        "denominator": 111
+      }
+    },
+    {
+      "left_at_least": 10000,
+      "left_below": 100000,
+      "gaps": 345,
+      "sum_length": 91463,
+      "min_length": 2,
+      "max_length": 2805,
+      "first_maximum": {
+        "index": 497,
+        "left": 95894,
+        "right": 98699
+      },
+      "above_normalized_threshold": [
+        107,
+        91,
+        45,
+        4,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0
+      ],
+      "mean_length": {
+        "numerator": 91463,
+        "denominator": 345
+      }
+    },
+    {
+      "left_at_least": 100000,
+      "left_below": 1000000,
+      "gaps": 1089,
+      "sum_length": 901646,
+      "min_length": 2,
+      "max_length": 13996,
+      "first_maximum": {
+        "index": 1373,
+        "left": 732714,
+        "right": 746710
+      },
+      "above_normalized_threshold": [
+        219,
+        200,
+        153,
+        57,
+        1,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0
+      ],
+      "mean_length": {
+        "numerator": 901646,
+        "denominator": 1089
+      }
+    },
+    {
+      "left_at_least": 1000000,
+      "left_below": 10000000,
+      "gaps": 3446,
+      "sum_length": 9002880,
+      "min_length": 2,
+      "max_length": 102830,
+      "first_maximum": {
+        "index": 4592,
+        "left": 8222432,
+        "right": 8325262
+      },
+      "above_normalized_threshold": [
+        387,
+        348,
+        314,
+        226,
+        92,
+        3,
+        0,
+        0,
+        0,
+        0,
+        0
+      ],
+      "mean_length": {
+        "numerator": 9002880,
+        "denominator": 3446
+      }
+    },
+    {
+      "left_at_least": 10000000,
+      "left_below": 100000000,
+      "gaps": 10912,
+      "sum_length": 90254657,
+      "min_length": 2,
+      "max_length": 826235,
+      "first_maximum": {
+        "index": 15951,
+        "left": 99434588,
+        "right": 100260823
+      },
+      "above_normalized_threshold": [
+        569,
+        544,
+        492,
+        450,
+        359,
+        167,
+        12,
+        0,
+        0,
+        0,
+        0
+      ],
+      "mean_length": {
+        "numerator": 90254657,
+        "denominator": 10912
+      }
+    },
+    {
+      "left_at_least": 100000000,
+      "left_below": 1000000000,
+      "gaps": 34495,
+      "sum_length": 900767333,
+      "min_length": 2,
+      "max_length": 5583107,
+      "first_maximum": {
+        "index": 48916,
+        "left": 936512926,
+        "right": 942096033
+      },
+      "above_normalized_threshold": [
+        917,
+        841,
+        802,
+        745,
+        672,
+        559,
+        272,
+        25,
+        0,
+        0,
+        0
+      ],
+      "mean_length": {
+        "numerator": 900767333,
+        "denominator": 34495
+      }
+    },
+    {
+      "left_at_least": 1000000000,
+      "left_below": 10000000000,
+      "gaps": 109005,
+      "sum_length": 8999550174,
+      "min_length": 2,
+      "max_length": 47291263,
+      "first_maximum": {
+        "index": 143543,
+        "left": 8063894186,
+        "right": 8111185449
+      },
+      "above_normalized_threshold": [
+        1286,
+        1208,
+        1062,
+        982,
+        948,
+        843,
+        728,
+        475,
+        107,
+        1,
+        0
+      ],
+      "mean_length": {
+        "numerator": 8999550174,
+        "denominator": 109005
+      }
+    },
+    {
+      "left_at_least": 10000000000,
+      "left_below": 100000000000,
+      "gaps": 345264,
+      "sum_length": 90127415915,
+      "min_length": 2,
+      "max_length": 378718982,
+      "first_maximum": {
+        "index": 469801,
+        "left": 86444052084,
+        "right": 86822771066
+      },
+      "above_normalized_threshold": [
+        1655,
+        1561,
+        1544,
+        1397,
+        1257,
+        1169,
+        1071,
+        955,
+        704,
+        282,
+        24
+      ],
+      "mean_length": {
+        "numerator": 90127415915,
+        "denominator": 345264
+      }
+    },
+    {
+      "left_at_least": 100000000000,
+      "left_below": 1000000000000,
+      "gaps": 1090921,
+      "sum_length": 900785436084,
+      "min_length": 2,
+      "max_length": 3593860818,
+      "first_maximum": {
+        "index": 1560703,
+        "left": 954510269998,
+        "right": 958104130816
+      },
+      "above_normalized_threshold": [
+        2681,
+        2232,
+        1895,
+        1759,
+        1671,
+        1522,
+        1413,
+        1318,
+        1201,
+        1003,
+        557
+      ],
+      "mean_length": {
+        "numerator": 900785436084,
+        "denominator": 1090921
+      }
+    },
+    {
+      "left_at_least": 1000000000000,
+      "left_below": 10000000000000,
+      "gaps": 3449008,
+      "sum_length": 9004691111852,
+      "min_length": 2,
+      "max_length": 40444422225,
+      "first_maximum": {
+        "index": 4792953,
+        "left": 8996426031585,
+        "right": 9036870453810
+      },
+      "above_normalized_threshold": [
+        4772,
+        3732,
+        3098,
+        2395,
+        1997,
+        1793,
+        1712,
+        1648,
+        1543,
+        1416,
+        1244
+      ],
+      "mean_length": {
+        "numerator": 9004691111852,
+        "denominator": 3449008
+      }
+    },
+    {
+      "left_at_least": 10000000000000,
+      "left_below": 100000000000000,
+      "gaps": 10912330,
+      "sum_length": 89925861905054,
+      "min_length": 2,
+      "max_length": 299712984412,
+      "first_maximum": {
+        "index": 15768573,
+        "left": 97454293430918,
+        "right": 97754006415330
+      },
+      "above_normalized_threshold": [
+        6558,
+        4457,
+        3407,
+        2991,
+        2872,
+        2784,
+        2407,
+        2148,
+        2019,
+        1845,
+        1698
+      ],
+      "mean_length": {
+        "numerator": 89925861905054,
+        "denominator": 10912330
+      }
+    }
+  ]
+}

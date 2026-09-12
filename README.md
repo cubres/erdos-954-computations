@@ -56,6 +56,23 @@ The query uses weighted pair sums in O(A(x)) time and constant extra space after
 loading the terms; it does not scan every integer through `x`. Python integers
 keep large areas exact. Subtract two prefix areas to obtain an interval's area.
 
+Summarize completed consecutive-term gap lengths by the left endpoint's decade:
+
+```sh
+python3 tools/gap_stats.py runs/data/terms_1e14.csv.gz --limit 100000000000000
+```
+
+The JSON includes exact length sums, means, minima and maxima, plus counts above
+the fixed normalized thresholds 1, 2, 4, ..., 1024. All comparisons use integers:
+a gap from `p` to `q` exceeds threshold `t` exactly when `(q-p)^2 > t^2*p`.
+Add `--through N` to summarize an earlier cutoff. Gaps must end by that cutoff;
+the initial 0-to-1 gap and unfinished tail are excluded. The output records the
+input checksum and boundary policy. This tool summarizes its input and does not
+audit the sequence. See [the format details](docs/data.md#gap-length-summaries).
+The [recorded summary through 10¹⁴](data/gap_statistics_1e14.json) uses the
+independently audited v1.2.0 terms. Its highest decade includes only gaps
+completed through 10¹⁴.
+
 | Audited quantity | Value |
 | --- | ---: |
 | Positive terms at or below 10¹⁴ | 15,956,975 |

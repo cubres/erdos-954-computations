@@ -14,6 +14,7 @@ terms; the fixed initial zero is excluded from the CSV.
 | `data/generator_1e14.json` | Original generator endpoint report |
 | `data/manifest.json` | Current release hashes, sizes, source provenance, and extra exact queries |
 | `data/manifest_1e13.json` | Archived manifest for the previous release |
+| `data/gap_statistics_1e14.json` | Reproducible completed-gap length summaries by decade |
 
 All 15,956,974 completed-gap rows were separately checked against consecutive
 audited terms. The gap index is the left term's index. There is no initial
@@ -46,6 +47,40 @@ separate `PASS` audit is the verification authority.
 
 For a historical release, pass `--manifest data/manifest_1e13.json` or
 `--manifest data/manifest_1e12.json` to `tools/fetch_data.py`.
+
+## Gap-length summaries
+
+`tools/gap_stats.py` reads an immutable positive-term CSV or gzip CSV in one
+streaming pass. It validates every input row and records the SHA-256 and byte
+count of the exact uncompressed input. The caller supplies its known complete
+bound with `--limit`; the tool does not prove that bound or audit greedy
+decisions. An optional `--through N` summarizes an earlier cutoff while still
+validating and hashing the entire input.
+
+The [recorded summary through 10¹⁴](../data/gap_statistics_1e14.json) identifies
+its input by the uncompressed SHA-256 recorded for the independently audited
+v1.2.0 term list. It contains 15,956,974 completed gaps. Its highest decade,
+with left endpoints in `[10^13,10^14)`, includes only gaps whose right endpoints
+are at most 10¹⁴; the final unfinished tail is excluded.
+
+Only completed pairs of consecutive positive terms `(p,q)` with `q <= N` are
+counted. The initial pair `(0,1)` and the unfinished interval after the final
+term are excluded. The pair belongs to the decade `10^k <= p < 10^(k+1)`, even
+when `q` lies in a later decade. A decade with no counted gaps is omitted.
+
+Each decade records the number of gaps, sum of their lengths, minimum and
+maximum length, the first gap attaining that maximum, and an exact mean as a
+numerator/denominator pair. The `above_normalized_threshold` list is aligned
+with `normalized_thresholds = [1,2,4,8,16,32,64,128,256,512,1024]`. Its entry for
+`t` counts precisely the gaps satisfying `(q-p)^2 > t^2*p`; equality is excluded.
+Python integers keep these comparisons exact, including beyond 64-bit squares.
+The reported checksum identifies the input bytes, not a proof of correctness.
+
+For a small example requiring no download:
+
+```sh
+python3 tools/gap_stats.py data/sample_1e6.csv --limit 1000000
+```
 
 ## Historical release: v1.1.0 through 10¹³
 
